@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Let\'s Track</string>
+    <string name="title_activity_splash">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="hint_news_heading">News Heading</string>
+</resources>
