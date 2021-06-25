@@ -1,41 +1,36 @@
 package com.app.lets_track_test.news
 
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
 import com.app.lets_track_test.databases.NewsDao
-import com.app.lets_track_test.network.ApiClient
+import com.app.lets_track_test.network.ApiInterface
 import com.app.lets_track_test.news.models.ArticlesItem
+import com.app.lets_track_test.news.models.NewsResponse
+import retrofit2.Response
 import javax.inject.Inject
 
-class NewsRepo @Inject constructor(private val newsDao: NewsDao) {
+class NewsRepo @Inject constructor(private val newsDao: NewsDao, private val api: ApiInterface):NewsRepoInterface {
 
-    val newsResponse = MutableLiveData<Pair<Int, ArrayList<ArticlesItem>?>>()
-    val dbNewsResponse=MutableLiveData<List<ArticlesItem>>()
-
-    suspend fun getNews() {
-        val apiClient = ApiClient.getClient()
-        try {
-            val response = apiClient.getNews()
-            response.let {
-                if (it.isSuccessful){
-                    newsResponse.postValue(Pair(it.code(),it.body()?.articles))
-
-                }else{
-                    newsResponse.postValue(Pair(it.code(),null))
+    override suspend fun getNews():Response<NewsResponse>? {
+        return try {
+            val response = api.getNews()
+            if (response.isSuccessful) {
+                response.let {
+                    return@let it
                 }
+            } else {
+                null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            newsResponse.postValue(Pair(0, null))
+            null
         }
 
     }
-    suspend fun  getNewsFromDb(){
-        val newsList=newsDao.getNews()
-        dbNewsResponse.postValue(newsList)
+   override fun  getNewsFromDb(): LiveData<List<ArticlesItem>> {
+       return newsDao.getNews()
     }
-    suspend fun saveNewsToDb(articles:ArticlesItem){
+   override suspend fun saveNewsToDb(articles:ArticlesItem){
         articles.let {
-            newsDao.insert(articles)
+            newsDao.insert(it)
         }
     }
 }

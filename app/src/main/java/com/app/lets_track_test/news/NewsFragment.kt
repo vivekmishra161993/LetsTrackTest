@@ -1,7 +1,9 @@
 package com.app.lets_track_test.news
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.lets_track_test.databinding.FragmentNewsBinding
 import com.app.lets_track_test.news.models.ArticlesItem
@@ -29,6 +32,7 @@ class NewsFragment : Fragment() {
     private lateinit var binding: FragmentNewsBinding
     private lateinit var dialogUtility: DialogUtility
     private var newsList = ArrayList<ArticlesItem>()
+    private val isNoInternet = MutableLiveData(false)
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -46,7 +50,7 @@ class NewsFragment : Fragment() {
         observeNewsResponse()
         observeNewsFromDbResponse()
         dialogUtility.showProgressDialog(requireContext())
-        viewModel.getNewsFromDb()
+        observeNewsFromDbResponse()
     }
 
     private fun initClasses() {
@@ -58,11 +62,11 @@ class NewsFragment : Fragment() {
     }
 
     private fun observeNewsResponse() {
-        viewModel.newsResponse.observe(viewLifecycleOwner, {
+        viewModel.newsLiveData.observe(viewLifecycleOwner, {
             dialogUtility.hideProgressDialog()
-            if (it.first == 200) {
+            if (it.code() == 200) {
                 Toast.makeText(requireContext(), "Success", Toast.LENGTH_SHORT).show()
-                it.second?.let { list ->
+                it.body()?.articles?.let { list ->
                     newsList.clear()
                     newsList.addAll(list)
 
@@ -78,12 +82,12 @@ class NewsFragment : Fragment() {
     }
 
     private fun observeNewsFromDbResponse() {
-        viewModel.dbNewsResponse.observe(viewLifecycleOwner, {
+        viewModel.newsList.observe(viewLifecycleOwner, {
             dialogUtility.hideProgressDialog()
             newsList.clear()
             newsList.addAll(it)
             if (newsList.size == 0) {
-                if (viewModel.isOnline()) {
+                if (isOnline()) {
 
                     dialogUtility.showProgressDialog(requireContext())
                     viewModel.getNews()
@@ -152,5 +156,13 @@ class NewsFragment : Fragment() {
         return savedImagePath
     }
 
+    fun isOnline(): Boolean {
+        val networkInfo = (requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).activeNetworkInfo
+        val isInternet = networkInfo != null && networkInfo.isConnected
+//        if (!isInternet) {
+        isNoInternet.value = !isInternet
+//        }
+        return isInternet
+    }
 
 }
