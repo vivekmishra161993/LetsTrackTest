@@ -10,11 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.app.lets_track_test.R
 import com.app.lets_track_test.databinding.FragmentNewsBinding
 import com.app.lets_track_test.news.models.ArticlesItem
+import com.app.lets_track_test.news_details.NewsDetailsFragment
 import com.app.lets_track_test.utils.DialogUtility
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -26,7 +29,7 @@ import java.io.OutputStream
 
 
 @AndroidEntryPoint
-class NewsFragment : Fragment() {
+class NewsFragment : Fragment(), OnItemClick {
 
     private val viewModel: NewsViewModel by viewModels()
     private lateinit var binding: FragmentNewsBinding
@@ -49,7 +52,6 @@ class NewsFragment : Fragment() {
         initClasses()
         observeNewsResponse()
         observeNewsFromDbResponse()
-        dialogUtility.showProgressDialog(requireContext())
         observeNewsFromDbResponse()
     }
 
@@ -83,7 +85,6 @@ class NewsFragment : Fragment() {
 
     private fun observeNewsFromDbResponse() {
         viewModel.newsList.observe(viewLifecycleOwner, {
-            dialogUtility.hideProgressDialog()
             newsList.clear()
             newsList.addAll(it)
             if (newsList.size == 0) {
@@ -104,7 +105,7 @@ class NewsFragment : Fragment() {
     }
 
     private fun setAdapter(newsList: ArrayList<ArticlesItem>) {
-        val newsAdapter = NewsAdapter(newsList)
+        val newsAdapter = NewsAdapter(newsList,this)
         binding.rvNews.adapter = newsAdapter
         binding.rvNews.layoutManager = LinearLayoutManager(requireContext())
         newsAdapter.notifyDataSetChanged()
@@ -156,13 +157,23 @@ class NewsFragment : Fragment() {
         return savedImagePath
     }
 
-    fun isOnline(): Boolean {
+    private fun isOnline(): Boolean {
         val networkInfo = (requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).activeNetworkInfo
         val isInternet = networkInfo != null && networkInfo.isConnected
 //        if (!isInternet) {
         isNoInternet.value = !isInternet
 //        }
         return isInternet
+    }
+
+    override fun onItemClick(position: Int) {
+        val detailFragment=NewsDetailsFragment(newsList[position])
+        val fm=requireActivity().supportFragmentManager
+        fm.commit {
+            setCustomAnimations(R.anim.slide_in, R.anim.fade_out, R.anim.fade_in,R.anim.slide_out)
+            replace(R.id.container,detailFragment)
+            addToBackStack(detailFragment::class.simpleName)
+        }
     }
 
 }

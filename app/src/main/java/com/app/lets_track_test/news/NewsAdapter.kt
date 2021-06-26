@@ -9,7 +9,7 @@ import com.app.lets_track_test.databinding.ItemNewsBinding
 import com.app.lets_track_test.news.models.ArticlesItem
 import kotlinx.android.synthetic.main.item_news.view.*
 
-class NewsAdapter(private val newsList : ArrayList<ArticlesItem>) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
+class NewsAdapter(private val newsList : ArrayList<ArticlesItem>,private val onItemClick: OnItemClick) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
 
     class NewsViewHolder private constructor(private val binding: ItemNewsBinding)
         : RecyclerView.ViewHolder(binding.root) {
@@ -41,7 +41,9 @@ class NewsAdapter(private val newsList : ArrayList<ArticlesItem>) : RecyclerView
         val item = newsList[position]
         holder.bind(item)
         holder.itemView.cv_news.animation=AnimationUtils.loadAnimation(holder.itemView.context, R.anim.translated)
-
+        holder.itemView.setOnClickListener {
+            onItemClick.onItemClick(position)
+        }
     }
 
 }
